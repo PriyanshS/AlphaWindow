@@ -83,11 +83,11 @@ Prerequisites
 
     Python 3.10+
 
-Launch Infrastructure
+### Launch Infrastructure:
 Bash
 
 # Clone the repository
-git clone https://github.com/yourusername/AlphaWindow.git
+git clone https://github.com/PriyanshS/AlphaWindow.git
 cd AlphaWindow
 
 # Start the Database and Python Analytics
