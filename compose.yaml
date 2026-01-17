@@ -1,0 +1,24 @@
+services:
+  # The Database Engine (TimescaleDB)
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: alphawindow-db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=alphapass
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql # Auto-runs schema
+      - postgres_data:/var/lib/postgresql/data
+
+  # Database GUI (To see your tables in a browser)
+  adminer:
+    image: adminer
+    container_name: alphawindow-gui
+    restart: always
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
