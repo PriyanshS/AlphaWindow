@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Analytics Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f8f8f8;
+    }
+    a {
+      text-decoration: none;
+      color: #007bff;
+      margin-right: 10px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .top-nav {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .card h2 {
+      margin-top: 0;
+    }
+    .card ul {
+      padding-left: 20px;
+    }
+    .bottom-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      text-align: center;
+    }
+    .bottom-metrics .card {
+      font-size: 1.2em;
+    }
+    .green {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <a href="#">Dashboard</a> | 
+    <a href="#">Markets</a> | 
+    <a href="#">Settings</a>
+  </div>
+
+  <h1>Analytics Dashboard</h1>
+  <p style="text-align:center;">Analysis and AlphaWindow detection</p>
+
+  <div class="dashboard-container">
+    <!-- Ticker Overview -->
+    <div class="card">
+      <h2>Ticker Overview</h2>
+      <h3>TSLA</h3>
+      <p>Status: <i>Connected</i></p>
+      <ul>
+        <li>Price: Live</li>
+        <li>Volume: High</li>
+      </ul>
+    </div>
+
+    <!-- Sentiment Chart -->
+    <div class="card" style="display:flex;align-items:center;justify-content:center;height:150px;">
+      <p>Displaying AlphaWindow Data</p>
+    </div>
+
+    <!-- Alpha Insights -->
+    <div class="card">
+      <h2>Alpha Insights</h2>
+      <p>Action: <span class="green">BUY</span></p>
+      <ul>
+        <li>Detected: Yes</li>
+        <li>Confidence: 78%</li>
+        <li>Correlation: 0.87</li>
+        <li>Lag: 12ms</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="bottom-metrics">
+    <div class="card">
+      <p>Sentiment Velocity</p>
+      <p class="green">+2.4% per minute</p>
+    </div>
+    <div class="card">
+      <p>Volume Surge</p>
+      <p>1.8x above average</p>
+    </div>
+    <div class="card">
+      <p>Social Mentions</p>
+      <p>12.4K last hour</p>
+    </div>
+    <div class="card">
+      <p>Prediction Accuracy</p>
+      <p><b>84%</b> 30-day rolling</p>
+    </div>
+  </div>
+
+</body>
+</html>
