@@ -1,0 +1,14 @@
+psycopg2-binary
+yfinance
+praw
+tweepy
+pandas
+tenacity
+python-dotenv
+requests
+transformers
+torch
+fastapi
+uvicorn[standard]
+httpx
+matplotlib
