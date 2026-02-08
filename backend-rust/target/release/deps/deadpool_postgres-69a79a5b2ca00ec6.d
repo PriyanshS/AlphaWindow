@@ -1,0 +1,10 @@
+/home/piyansh46/Code/AlphaWindow/backend-rust/target/release/deps/deadpool_postgres-69a79a5b2ca00ec6.d: /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/lib.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/config.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/generic_client.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/../README.md
+
+/home/piyansh46/Code/AlphaWindow/backend-rust/target/release/deps/libdeadpool_postgres-69a79a5b2ca00ec6.rlib: /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/lib.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/config.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/generic_client.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/../README.md
+
+/home/piyansh46/Code/AlphaWindow/backend-rust/target/release/deps/libdeadpool_postgres-69a79a5b2ca00ec6.rmeta: /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/lib.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/config.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/generic_client.rs /home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/../README.md
+
+/home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/lib.rs:
+/home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/config.rs:
+/home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/generic_client.rs:
+/home/piyansh46/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/deadpool-postgres-0.12.1/src/../README.md:
