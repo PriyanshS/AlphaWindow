@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaWindow | Lead-Lag Sentiment Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&family=Eczar:wght@400;600;800&family=Grenze:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0a0b10;
+            --bg-card: #14171d;
+            --text-main: #e1e7ef;
+            --text-muted: #94a3b8;
+            --accent-cyan: #38bdf8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-color: #27272a;
+            --sidebar-width: 240px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+        /* Utility Classes */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .btn-primary {
+            background: #c5a059;
+            color: var(--bg-main);
+            border: none;
+            padding: 1.5rem 3rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1.4rem;
+            font-family: 'Eczar', serif;
+            letter-spacing: 3px;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .badge-status {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .green { color: #10b981; }
+        .red { color: #ef4444; }
+        .cyan { color: #c5a059; }
+
+        /* Typography */
+        h2 {
+            font-family: 'Eczar', serif;
+            font-size: 2rem;
+            letter-spacing: 0;
+            color: #c5a059;
+        }
+
+        h3 {
+            font-family: 'Eczar', serif;
+            font-size: 1.8rem;
+            letter-spacing: 0;
+            color: #c5a059;
+        }
+
+        h4 {
+            font-family: 'Eczar', serif;
+            font-size: 1.2rem;
+            letter-spacing: 0;
+            color: #c5a059;
+        }
+
+        .subtitle {
+            font-family: 'Eczar', serif;
+            font-size: 1.5rem;
+            letter-spacing: 4px;
+            color: #8e6d31;
+            max-width: 1000px;
+            line-height: 1.8;
+            margin: 0 auto;
+        }
+
+        .body-text {
+            font-family: 'Grenze', serif;
+            font-size: 1.3rem;
+            letter-spacing: 0;
+            color: #f9f7f2;
+        }
+
+        .table-label {
+            font-family: 'Eczar', serif;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: #c5a059;
+        }
+
+        .table-value {
+            font-family: 'Grenze', serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0;
+            color: #f9f7f2;
+        }
+
+        /* Layout Structure */
+        #app-root {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        nav#sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .nav-logo {
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: #c5a059;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Eczar', serif;
+        }
+
+        .nav-link {
+            padding: 0.75rem 1rem;
+            color: #c5a059;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-family: 'Eczar', serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(197, 160, 89, 0.1);
+            color: #c5a059;
+        }
+
+        main#content {
+            margin: 0 auto;
+            flex-grow: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* When the sidebar is visible, offset the content container so it sits to the right */
+        main#content.with-sidebar {
+            margin-left: var(--sidebar-width);
+            margin-right: 0;
+        }
+
+        /* Landing Page - Full Screen Layout */
+        #view-landing {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .landing-view {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 4rem;
+            padding: 4rem 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .hero h1 {
+            font-family: 'Eczar', serif;
+            font-size: clamp(4rem, 10vw, 8rem);
+            font-weight: 800;
+            letter-spacing: 8px;
+            margin: 0;
+            color: #c5a059;
+            line-height: 1.1;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.6rem);
+            letter-spacing: 2px;
+            max-width: 900px;
+            padding: 0 1rem;
+        }
+
+        /* Architecture Visualization */
+        .arch-viz {
+            display: flex;
+            gap: 3rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            width: 100%;
+            padding: 2rem 0;
+        }
+
+        .viz-node {
+            width: clamp(180px, 18vw, 280px);
+            height: clamp(180px, 18vw, 280px);
+            border: 3px solid #c5a059;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-size: clamp(1.2rem, 2vw, 2rem);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .viz-node:hover {
+            transform: scale(1.05);
+            border-color: #d4b068;
+            box-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
+        }
+
+        .viz-node::after {
+            content: '→';
+            position: absolute;
+            right: -2.5rem;
+            font-size: 2rem;
+            color: var(--border-color);
+        }
+
+        .viz-node:last-child::after { 
+            display: none; 
+        }
+
+        .viz-node.highlight {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            align-items: center;
+            width: 100%;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-secondary {
+            font-family: 'Eczar', serif;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: #c5a059;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border: 2px solid #c5a059;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(197, 160, 89, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Sign Up Page */
+        #view-signup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        #view-signup > div {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        /* Dashboard Grid (The Alpha Window) */
+        .alpha-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .timeline-sync {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            align-items: center;
+        }
+
+        /* Market Table */
+        .market-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .market-table th {
+            text-align: left;
+            color: #c5a059;
+            font-family: 'Eczar', serif;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            font-weight: normal;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .market-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-family: 'Grenze', serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #f9f7f2;
+        }
+
+        .market-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* Sentiment Bars */
+        .sentiment-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #27272a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .sentiment-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        /* News Feed */
+        .news-item {
+            margin-bottom: 1rem;
+            border-left: 3px solid #c5a059;
+            padding-left: 1.5rem;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Sidebar Toggle Button */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            width: 44px;
+            height: 44px;
+            border-radius: 6px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(197, 160, 89, 0.1);
+            border-color: #c5a059;
+        }
+
+        .sidebar-toggle span {
+            width: 20px;
+            height: 2px;
+            background: var(--text-main);
+            position: relative;
+            display: block;
+            transition: all 0.3s;
+        }
+
+        .sidebar-toggle span::before,
+        .sidebar-toggle span::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background: var(--text-main);
+            left: 0;
+            transition: all 0.3s;
+        }
+
+        .sidebar-toggle span::before { top: -6px; }
+        .sidebar-toggle span::after { top: 6px; }
+
+        .sidebar-toggle.active span {
+            background: transparent;
+        }
+
+        .sidebar-toggle.active span::before {
+            transform: rotate(45deg);
+            top: 0;
+        }
+
+        .sidebar-toggle.active span::after {
+            transform: rotate(-45deg);
+            top: 0;
+        }
+
+        /* Sidebar Transitions */
+        nav#sidebar {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        nav#sidebar.hidden {
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        nav#sidebar:not(.hidden) {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        main#content {
+            transition: margin-left 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            nav#sidebar { width: 60px; padding: 0.5rem; }
+            .nav-link span { display: none; }
+            main#content.with-sidebar { margin-left: 60px; }
+            
+            .hero h1 { 
+                font-size: 3.5rem; 
+                letter-spacing: 4px;
+            }
+            
+            .hero .subtitle { 
+                font-size: 1rem; 
+                letter-spacing: 1px; 
+            }
+            
+            .viz-node { 
+                width: 140px; 
+                height: 140px; 
+                font-size: 1.1rem; 
+            }
+            
+            .arch-viz { 
+                gap: 2rem; 
+            }
+            
+            .viz-node::after {
+                right: -1.5rem;
+                font-size: 1.5rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-root">
+        <!-- Sidebar Toggle Button -->
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+            <span></span>
+        </button>
+
+        <!-- Sidebar Navigation -->
+        <nav id="sidebar" class="hidden">
+            <div class="nav-logo">
+                <span>AlphaWindow</span>
+            </div>
+            <a onclick="navigate('index')" class="nav-link active" data-view="index">
+                <span>Dashboard</span>
+            </a>
+            <a onclick="navigate('market')" class="nav-link" data-view="market">
+                <span>Market Hub</span>
+            </a>
+            <a onclick="navigate('social')" class="nav-link" data-view="social">
+                <span>Social Pulse</span>
+            </a>
+            <a onclick="navigate('media')" class="nav-link" data-view="media">
+                <span>Media Oracle</span>
+            </a>
+            <div style="margin-top: auto;">
+                <a onclick="navigate('landing')" class="nav-link">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Dynamic Content -->
+        <main id="content">
+            <!-- Landing Page -->
+            <div id="view-landing" class="view">
+                <div class="landing-view">
+                    <div class="hero">
+                        <h1>ALPHAWINDOW</h1>
+                        <p class="subtitle">
+                            Identify the time-lag between sentiment and price action with our Lead-Lag Correlation Engine.
+                        </p>
+                    </div>
+                    
+                    <div class="arch-viz">
+                        <div class="viz-node"><span class="mono">MEDIA</span></div>
+                        <div class="viz-node"><span class="mono">SOCIAL</span></div>
+                        <div class="viz-node highlight"><span class="mono">PRICE</span></div>
+                    </div>
+
+                    <div class="cta-section">
+                        <div class="cta-buttons">
+                            <button onclick="navigate('signup')" class="btn-primary">Initialize Access</button>
+                            <a href="https://github.com/PriyanshS/AlphaWindow" target="_blank" class="btn-secondary">View Documentation</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sign Up Page -->
+            <div id="view-signup" class="view hidden">
+                <div>
+                    <div class="card">
+                        <h2 style="margin-bottom: 3rem; font-size: 3rem;">Access Authorization</h2>
+                        <div style="margin-bottom: 2rem;">
+                            <label class="mono" style="font-size: 1.6rem; display: block; margin-bottom: 1rem;">TERMINAL_UID</label>
+                            <input type="text" placeholder="priyansh_s" style="width: 100%; padding: 1.5rem; background: var(--bg-main); border: 1px solid var(--border-color); color: white; border-radius: 4px; font-size: 1.4rem;">
+                        </div>
+                        <div style="margin-bottom: 4rem;">
+                            <label class="mono" style="font-size: 1.6rem; display: block; margin-bottom: 1rem;">ENCRYPTION_KEY</label>
+                            <input type="password" placeholder="••••••••" style="width: 100%; padding: 1.5rem; background: var(--bg-main); border: 1px solid var(--border-color); color: white; border-radius: 4px; font-size: 1.4rem;">
+                        </div>
+                        <button onclick="navigate('index')" class="btn-primary" style="width: 100%; padding: 2rem 4rem;">AUTHENTICATE</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard (The Alpha Window) -->
+            <div id="view-index" class="view hidden">
+                <h2 class="mono" style="margin-bottom: 2rem;">TICKER : NVDA </h2>
+                
+                <div class="alpha-grid">
+                    <!-- Stream 1: Media -->
+                    <div class="card">
+                        <div class="timeline-sync">
+                            <span class="badge-status cyan">Media</span>
+                            <div class="mono" style="font-size: 0.8rem;">T-MINUS 120M : Headline Detected</div>
+                        </div>
+                        <div style="padding: 1rem 0;">
+                            <h3>Jensen Huang announces next-gen H200 Blackwell architecture</h3>
+                            <p class="mono" style="color: var(--accent-green); font-size: 0.9rem;">Prediction: Bullish | Confidence: 94%</p>
+                        </div>
+                    </div>
+
+                    <!-- Stream 2: Social -->
+                    <div class="card">
+                        <div class="timeline-sync">
+                            <span class="badge-status" style="background: #5865F2; color: white;">Social</span>
+                            <div class="mono" style="font-size: 0.8rem;">T-MINUS 45M : Sentiment Spike</div>
+                        </div>
+                        <div style="padding: 1rem 0;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Volume: 12.4k mentions/min</span>
+                                <span class="green">Score: 0.82 (High Optimism)</span>
+                            </div>
+                            <div class="sentiment-bar-container">
+                                <div class="sentiment-fill" style="width: 82%; background: var(--accent-green);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stream 3: Market -->
+                    <div class="card">
+                        <div class="timeline-sync">
+                            <span class="badge-status green">Market</span>
+                            <div class="mono" style="font-size: 0.8rem;">T-ZERO : Price Response</div>
+                        </div>
+                        <div style="padding: 1rem 0; display: flex; align-items: flex-end; gap: 2rem;">
+                            <div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">CURRENT PRICE</div>
+                                <div class="mono" style="font-size: 2.5rem; font-weight: bold;">$784.22</div>
+                            </div>
+                            <div style="padding-bottom: 10px;">
+                                <div class="green mono">▲ 2.41%</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Real-time Tick</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Hub -->
+            <div id="view-market" class="view hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 class="mono">TRACKED_TICKERS (53)</h2>
+                    <input type="text" placeholder="Filter symbol..." style="padding: 0.5rem; background: var(--bg-card); border: 1px solid var(--border-color); color: white; border-radius: 4px;">
+                </div>
+
+                <div class="card" style="padding: 0;">
+                    <table class="market-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>24h Change</th>
+                                <th>Alpha Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticker-list">
+                            <!-- JS injected tickers -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Social Pulse -->
+            <div id="view-social" class="view hidden">
+                <h2 class="mono" style="margin-bottom: 2rem;">SENTIMENT_HEATMAP</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div class="card">
+                        <h4 class="mono" style="margin-bottom: 1rem;">Trending Topics</h4>
+                        <ul style="list-style: none;">
+                            <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                                <span>#EarningsSeason</span>
+                                <span class="cyan">4.2k pts</span>
+                            </li>
+                            <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                                <span>#FOMC_Minutes</span>
+                                <span class="cyan">2.9k pts</span>
+                            </li>
+                            <li style="padding: 0.5rem 0; display: flex; justify-content: space-between;">
+                                <span>#AI_Infrastructure</span>
+                                <span class="cyan">8.1k pts</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4 class="mono" style="margin-bottom: 1rem;">Platform Aggregate</h4>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                                <span>X (Twitter)</span>
+                                <span class="green">Bullish</span>
+                            </div>
+                            <div class="sentiment-bar-container"><div class="sentiment-fill" style="width: 75%; background: var(--accent-green);"></div></div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                                <span>Reddit (r/WSB)</span>
+                                <span class="red">Bearish</span>
+                            </div>
+                            <div class="sentiment-bar-container"><div class="sentiment-fill" style="width: 30%; background: var(--accent-red);"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Oracle -->
+            <div id="view-media" class="view hidden">
+                <h2 class="mono" style="margin-bottom: 2rem;">NLP_ORACLE_FEED</h2>
+                <div class="card">
+                    <div class="news-item">
+                        <div style="display: flex; gap: 10px; margin-bottom: 0.5rem;">
+                            <span class="badge-status mono" style="background: rgba(197, 160, 89, 0.2); color: #c5a059;">NVDA</span>
+                            <span class="mono" style="font-size: 0.75rem; color: var(--text-muted);">Source: Reuters | 12m ago</span>
+                        </div>
+                        <p style="font-weight: 600;">Government orders additional $5B in specialized hardware for data centers.</p>
+                        <div style="margin-top: 5px; font-size: 0.8rem;">NLP Confidence: <span class="green">98.2%</span> | Predicted Move: <span class="green">+1.5%</span></div>
+                    </div>
+                    <div class="news-item" style="border-left-color: var(--accent-red);">
+                        <div style="display: flex; gap: 10px; margin-bottom: 0.5rem;">
+                            <span class="badge-status mono" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">AAPL</span>
+                            <span class="mono" style="font-size: 0.75rem; color: var(--text-muted);">Source: Bloomberg | 45m ago</span>
+                        </div>
+                        <p style="font-weight: 600;">Supply chain constraints in Southeast Asia likely to delay flagship launch.</p>
+                        <div style="margin-top: 5px; font-size: 0.8rem;">NLP Confidence: <span class="red">76.4%</span> | Predicted Move: <span class="red">-0.8%</span></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const content = document.getElementById('content');
+            
+            sidebar.classList.toggle('hidden');
+            toggle.classList.toggle('active');
+            
+            // Update content margin via class
+            if (sidebar.classList.contains('hidden')) {
+                content.classList.remove('with-sidebar');
+            } else {
+                content.classList.add('with-sidebar');
+            }
+        }
+
+        // Simple Router Implementation
+        function navigate(viewId) {
+            // Hide all views
+            const views = document.querySelectorAll('.view');
+            views.forEach(v => v.classList.add('hidden'));
+
+            // Show target view
+            const target = document.getElementById(`view-${viewId}`);
+            if (target) {
+                target.classList.remove('hidden');
+            }
+
+            // Sidebar visibility and toggle button
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const content = document.getElementById('content');
+            
+            if (viewId === 'landing' || viewId === 'signup') {
+                sidebar.classList.add('hidden');
+                content.classList.remove('with-sidebar');
+                toggle.style.display = 'none';
+                toggle.classList.remove('active');
+            } else {
+                sidebar.classList.remove('hidden');
+                content.classList.add('with-sidebar');
+                toggle.style.display = 'flex';
+                
+                // Active link styling
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                const activeLink = document.querySelector(`.nav-link[data-view="${viewId}"]`);
+                if (activeLink) activeLink.classList.add('active');
+            }
+
+            // Scroll to top
+            window.scrollTo(0,0);
+        }
+
+        // Generate Market Data
+        function populateMarket() {
+            const list = document.getElementById('ticker-list');
+            const tickers = [
+                { s: 'NVDA', n: 'NVIDIA Corp', p: '784.22', c: '+2.41', a: '98' },
+                { s: 'AAPL', n: 'Apple Inc', p: '182.31', c: '-0.45', a: '45' },
+                { s: 'AMD', n: 'Advanced Micro Devices', p: '176.11', c: '+1.12', a: '82' },
+                { s: 'MSFT', n: 'Microsoft', p: '412.05', c: '+0.15', a: '67' },
+                { s: 'TSLA', n: 'Tesla, Inc', p: '193.57', c: '-3.21', a: '12' },
+                { s: 'GOOGL', n: 'Alphabet Inc', p: '144.35', c: '+0.88', a: '55' },
+                { s: 'META', n: 'Meta Platforms', p: '485.58', c: '+2.10', a: '89' }
+            ];
+
+            // Fill up to 53 for dummy representation
+            const listItems = tickers.map(t => `
+                <tr onclick="navigate('index')" style="cursor: pointer;">
+                    <td><span class="mono cyan">${t.s}</span></td>
+                    <td style="color: var(--text-muted);">${t.n}</td>
+                    <td class="mono">$${t.p}</td>
+                    <td class="mono ${t.c.startsWith('+') ? 'green' : 'red'}">${t.c}%</td>
+                    <td>
+                        <div class="sentiment-bar-container" style="width: 80px;">
+                            <div class="sentiment-fill" style="width: ${t.a}%; background: ${t.a > 50 ? 'var(--accent-green)' : 'var(--accent-red)'}"></div>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            list.innerHTML = listItems;
+        }
+
+        // Initialize
+        window.onload = () => {
+            populateMarket();
+            navigate('landing');
+        };
+    </script>
+</body>
+</html>
