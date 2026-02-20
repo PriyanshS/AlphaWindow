@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaWindow — Ticker Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Eczar:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.mkt-layout{display:grid;grid-template-columns:300px 1fr;flex:1;min-height:calc(100vh - 52px)}
+.alist{border-right:var(--bdr);overflow-y:auto;display:flex;flex-direction:column}
+.alist-hd{padding:12px 14px;border-bottom:var(--bdr);position:sticky;top:0;background:var(--bg1);z-index:5}
+.alist-cols{
+  display:grid;grid-template-columns:36px 1fr auto;gap:10px;
+  padding:6px 14px;font-size:clamp(8px,.56vw,9px);color:var(--txtD);
+  letter-spacing:.08em;text-transform:uppercase;border-bottom:var(--bdr);
+}
+.adet{padding:clamp(12px,1.5vw,24px);overflow-y:auto}
+.aname{font-size:clamp(10px,.8vw,12px);font-weight:600}
+.afull{font-size:clamp(8px,.58vw,10px);color:var(--txtD);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.apw{text-align:right}
+.aprx{font-family:var(--fm);font-size:clamp(10px,.8vw,12px);font-weight:600}
+.achg{font-family:var(--fm);font-size:clamp(8px,.56vw,10px)}
+.sent-bar-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:var(--bdr)}
+.sb-tr{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.sb-f{height:100%;border-radius:3px;transition:width 500ms var(--ease)}
+.sb-bull{background:linear-gradient(90deg,var(--bull),#2ecc71)}
+
+@media(max-width:1000px){
+  .mkt-layout{grid-template-columns:1fr}
+  .alist{max-height:40vh}
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div id="nav-mount"></div>
+
+<div class="page">
+  <div class="mkt-layout">
+
+    <!-- Asset list -->
+    <div class="alist">
+      <div class="alist-hd">
+        <input class="inp" id="asearch" type="text" placeholder="Search ticker…">
+      </div>
+      <div class="alist-cols"><span></span><span>Asset</span><span>Price / Chg</span></div>
+      <div id="asset-list"></div>
+    </div>
+
+    <!-- Asset detail -->
+    <div class="adet" id="asset-detail">
+      <div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--txtD);font-size:clamp(10px,.8vw,12px)">
+        Select an asset to view details
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+document.getElementById('nav-mount').innerHTML = buildNav('market');
+startClock();
+ASSETS.forEach(a=>getData(a.t));
+
+let activeTicker = getTicker();
+
+function renderList(){
+  document.getElementById('asset-list').innerHTML = ASSETS.map(a=>{
+    const d = getData(a.t).sum;
+    const isCrypto = a.t==='BTC'||a.t==='ETH';
+    return `<div class="arow ${a.t===activeTicker?'active':''}" data-t="${a.t}" onclick="selectTicker('${a.t}')">
+      <div class="aico">${a.i}</div>
+      <div><div class="aname">${a.t}</div><div class="afull">${a.n}</div></div>
+      <div class="apw">
+        <div class="aprx">\$${isCrypto?f(d.price,0):f(d.price)}</div>
+        <div class="achg ${d.chgp>=0?'up':'dn'}">${fp(d.chgp)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectTicker(t){
+  activeTicker = t;
+  setTicker(t);
+  document.querySelectorAll('.arow').forEach(r=>r.classList.toggle('active',r.dataset.t===t));
+  renderDetail(t);
+}
+
+function renderDetail(t){
+  const D = getData(t);
+  const {sum, prices, sentiment} = D;
+  const asset = ASSETS.find(a=>a.t===t);
+  const isCrypto = t==='BTC'||t==='ETH';
+
+  document.getElementById('asset-detail').innerHTML = `
+    <div class="flex fca gap8 stagger" style="margin-bottom:18px;flex-wrap:wrap">
+      <div class="aico" style="width:48px;height:48px;font-size:13px">${asset.i}</div>
+      <div>
+        <div style="font-family:var(--fd);font-size:clamp(20px,2vw,30px);font-weight:700">${asset.t}</div>
+        <div class="sec" style="font-size:clamp(9px,.65vw,11px)">${asset.n} · ${asset.s}</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div class="mono gold" style="font-size:clamp(22px,2.3vw,36px);font-weight:700">
+          \$${isCrypto?f(sum.price,0):f(sum.price)}
+        </div>
+        <div class="${sum.chgp>=0?'bull':'bear'} mono" style="font-size:clamp(10px,.8vw,13px)">
+          ${sum.chg>=0?'+':''}${f(sum.chg)} (${fp(sum.chgp)})
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="ch"><span class="ct"><span class="a">PRICE</span> · 5MIN BARS</span><span class="bdg b-${sum.chgp>=0?'bull':'bear'}">${sum.chgp>=0?'▲':'▼'} LIVE</span></div>
+      <div style="padding:8px;height:160px"><canvas id="mc-price" style="width:100%;height:100%;display:block"></canvas></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="card">
+        <div class="ch"><span class="ct">Pearson <span class="a">R</span></span></div>
+        <div class="cb" style="text-align:center">
+          <div class="mono gold" style="font-size:clamp(24px,2.2vw,34px);font-weight:700">${sum.pearson}</div>
+          <div class="dim" style="font-size:clamp(8px,.56vw,9px);text-transform:uppercase;letter-spacing:.06em">Sent→Price</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Signal <span class="a">Lag</span></span></div>
+        <div class="cb" style="text-align:center">
+          <div class="mono gold" style="font-size:clamp(24px,2.2vw,34px);font-weight:700">${sum.lag}h</div>
+          <div class="dim" style="font-size:clamp(8px,.56vw,9px);text-transform:uppercase;letter-spacing:.06em">Lead time</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct"><span class="a">Signal</span></span></div>
+        <div class="cb" style="text-align:center;padding-top:18px">
+          <span class="bdg b-${sc(sum.sc)}" style="font-size:clamp(10px,.8vw,12px);padding:8px 16px">${sl(sum.sc)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="ch">
+        <span class="ct"><span class="a">SENTIMENT</span> Overlay</span>
+        <span class="dim" style="font-size:clamp(8px,.56vw,9px)">Bull ${sum.bp}% / Bear ${(100-sum.bp).toFixed(1)}%</span>
+      </div>
+      <div class="sent-bar-row">
+        <span class="bear" style="font-size:clamp(8px,.58vw,10px)">Bear</span>
+        <div class="sb-tr"><div class="sb-f sb-bull" style="width:${sum.bp}%"></div></div>
+        <span class="bull" style="font-size:clamp(8px,.58vw,10px)">Bull</span>
+        <span class="mono bull" style="font-weight:700;font-size:clamp(10px,.8vw,12px);min-width:36px;text-align:right">${sum.bp}%</span>
+      </div>
+      <div style="padding:6px 8px;height:100px">
+        <canvas id="mc-sent" style="width:100%;height:100%;display:block"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><span class="ct"><span class="a">VOLUME</span> Profile</span></div>
+      <div style="padding:6px 8px;height:80px">
+        <canvas id="mc-vol" style="width:100%;height:100%;display:block"></canvas>
+      </div>
+    </div>
+  `;
+
+  requestAnimationFrame(()=>{
+    spark(document.getElementById('mc-price'), prices.slice(-48).map(p=>p.c), {color:'#c5a059',grid:true,lw:2,fill:.18});
+    spark(document.getElementById('mc-sent'), sentiment.slice(-48).map(s=>s.score), {color:sum.sc>0?'#3ddc84':'#ff4d6d',grid:true});
+    spark(document.getElementById('mc-vol'), prices.slice(-48).map(p=>p.v/1e6), {type:'bar',color:'#4a5268'});
+  });
+}
+
+// Search filter
+document.getElementById('asearch').addEventListener('input', function(){
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.arow').forEach(r=>{
+    r.style.display = (!q || r.dataset.t.toLowerCase().includes(q)) ? '' : 'none';
+  });
+});
+
+renderList();
+renderDetail(activeTicker);
+
+startTick((t, s)=>{
+  const el = document.querySelector(`[data-t="${t}"] .aprx`);
+  if(el) el.textContent = `\$${(t==='BTC'||t==='ETH')?f(s.price,0):f(s.price)}`;
+  const ch = document.querySelector(`[data-t="${t}"] .achg`);
+  if(ch){ ch.textContent = fp(s.chgp); ch.className = `achg ${s.chgp>=0?'up':'dn'}`; }
+});
+</script>
+</body>
+</html>

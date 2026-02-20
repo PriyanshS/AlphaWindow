@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaWindow — Quant Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Eczar:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+body{overflow:hidden}
+.land-bg-grid{
+  position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(197,160,89,.04) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(197,160,89,.04) 1px,transparent 1px);
+  background-size:52px 52px;
+}
+.land-bg-glow{
+  position:fixed;top:-20%;left:50%;transform:translateX(-50%);
+  width:70vw;height:70vw;pointer-events:none;
+  background:radial-gradient(ellipse,rgba(197,160,89,.06) 0%,transparent 62%);
+}
+.land-wrap{
+  position:relative;z-index:1;display:grid;
+  grid-template-columns:1fr 460px;min-height:100vh;
+}
+.land-hero{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(32px,4vw,80px) clamp(24px,3vw,56px) clamp(32px,4vw,80px) clamp(48px,6vw,120px);
+}
+.eyebrow{
+  font-family:var(--fm);font-size:clamp(9px,.65vw,11px);letter-spacing:.28em;
+  text-transform:uppercase;color:var(--goldD);margin-bottom:22px;
+  display:flex;align-items:center;gap:14px;
+}
+.eyebrow::before{content:'';width:28px;height:1px;background:var(--goldD)}
+.land-title{
+  font-family:var(--fd);font-size:clamp(58px,7vw,108px);font-weight:800;
+  letter-spacing:-.045em;line-height:.9;margin-bottom:28px;
+  background:linear-gradient(155deg,#ffffff 0%,var(--gold) 50%,var(--goldD) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.land-sub{
+  font-family:var(--fm);font-size:clamp(11px,.88vw,14px);color:var(--txt2);
+  line-height:1.75;max-width:430px;margin-bottom:40px;
+}
+.land-stats{display:flex;gap:clamp(24px,3vw,48px);margin-bottom:40px}
+.stat-val{font-family:var(--fd);font-size:clamp(24px,2.2vw,36px);font-weight:700;color:var(--gold)}
+.stat-lbl{font-size:clamp(8px,.6vw,10px);color:var(--txtD);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.land-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:36px}
+.sys-panel{
+  padding:16px 18px;background:var(--bg2);border:var(--bdr);border-radius:var(--r2);
+  display:flex;flex-direction:column;gap:9px;max-width:420px;
+}
+.sys-label{font-family:var(--fm);font-size:clamp(8px,.58vw,10px);color:var(--txtD);letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px}
+.sys-row{display:flex;align-items:center;justify-content:space-between;font-size:clamp(9px,.65vw,11px)}
+
+/* Auth panel */
+.auth-panel{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  padding:clamp(28px,3.5vw,64px);border-left:var(--bdr);
+  background:linear-gradient(160deg,var(--bg1) 0%,var(--bg) 100%);
+  position:relative;
+}
+.auth-inner{width:100%;max-width:360px}
+.auth-h{font-family:var(--fd);font-size:clamp(22px,2vw,30px);font-weight:700;margin-bottom:4px}
+.auth-s{font-size:clamp(9px,.65vw,11px);color:var(--txtD);margin-bottom:22px}
+.auth-tog{display:flex;border:var(--bdr);border-radius:var(--r1);overflow:hidden;margin-bottom:18px}
+.atog{
+  flex:1;padding:9px;text-align:center;font-family:var(--fm);
+  font-size:clamp(9px,.65vw,11px);letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;background:none;border:none;color:var(--txtD);transition:all 140ms ease;
+}
+.atog.on{background:var(--goldG);color:var(--gold)}
+.auth-form{display:flex;flex-direction:column;gap:13px}
+.afield{display:flex;flex-direction:column;gap:4px}
+.albl{font-size:clamp(8px,.58vw,10px);color:var(--txt2);letter-spacing:.08em;text-transform:uppercase}
+.auth-term{
+  margin-top:22px;padding:13px;background:var(--bg3);border:var(--bdr);
+  border-radius:var(--r1);font-family:var(--fm);font-size:clamp(9px,.65vw,11px);
+  display:flex;flex-direction:column;gap:2px;
+}
+.atl{color:var(--bull)} .atl.w{color:var(--warn)} .atl.g{color:var(--gold)}
+.cur{display:inline-block;animation:blink .9s step-end infinite;color:var(--gold)}
+
+/* Boot overlay */
+#boot{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+}
+#boot.on{display:flex}
+.boot-logo{
+  font-family:var(--fd);font-size:clamp(40px,5vw,68px);font-weight:800;
+  color:var(--gold);letter-spacing:-.03em;
+  animation:glow 1s ease-in-out infinite alternate;
+}
+@keyframes glow{
+  from{text-shadow:0 0 20px rgba(197,160,89,.3)}
+  to{text-shadow:0 0 70px rgba(197,160,89,.8),0 0 140px rgba(197,160,89,.3)}
+}
+.boot-term{
+  width:400px;height:138px;background:var(--bg2);border:var(--bdr);
+  border-radius:var(--r2);padding:13px;overflow:hidden;
+  font-family:var(--fm);font-size:clamp(10px,.75vw,12px);
+  display:flex;flex-direction:column;gap:1px;
+}
+.bl{opacity:0;animation:bli 180ms ease forwards}
+@keyframes bli{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+.boot-prog{width:400px;height:2px;background:var(--bg3);border-radius:1px;overflow:hidden}
+.boot-bar{height:100%;background:linear-gradient(90deg,var(--goldD),var(--goldB));width:0;border-radius:1px;transition:width 1.9s var(--ease);box-shadow:0 0 14px var(--goldGlow)}
+
+@media(max-width:900px){
+  .land-wrap{grid-template-columns:1fr}
+  .auth-panel{border-left:none;border-top:var(--bdr);overflow-y:auto}
+  body{overflow:auto}
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="land-bg-grid"></div>
+<div class="land-bg-glow"></div>
+
+<!-- Boot overlay -->
+<div id="boot">
+  <div class="boot-logo">AlphaWindow</div>
+  <div class="boot-term" id="boot-term"></div>
+  <div class="boot-prog"><div class="boot-bar" id="boot-bar"></div></div>
+</div>
+
+<div class="land-wrap">
+
+  <!-- Hero -->
+  <div class="land-hero">
+    <div class="eyebrow">Quantitative Intelligence Platform</div>
+    <h1 class="land-title">Alpha<br>Window</h1>
+    <p class="land-sub">
+      A Quant Terminal engineered for lead-lag sentiment analysis.
+      Real-time Pearson R cross-correlation between social signals
+      and price action — before the market reacts.
+    </p>
+
+    <div class="land-stats">
+      <div><div class="stat-val">4.2h</div><div class="stat-lbl">Avg Signal Lead</div></div>
+      <div><div class="stat-val">0.71</div><div class="stat-lbl">Pearson R (NVDA)</div></div>
+      <div><div class="stat-val">98ms</div><div class="stat-lbl">WS Latency</div></div>
+    </div>
+
+    <div class="land-chips">
+      <span class="bdg b-neu">Pearson R Cross-Corr</span>
+      <span class="bdg b-neu">Temporal Cursor Sync</span>
+      <span class="bdg b-neu">NLP Lexicon Scoring</span>
+      <span class="bdg b-neu">Triple Stream Sync</span>
+      <span class="bdg b-neu">X · Reddit · RSS</span>
+    </div>
+
+    <div class="sys-panel">
+      <div class="sys-label">System Integration Status</div>
+      <div class="sys-row"><span class="sec">Frontend UI</span><span class="bdg b-bull">ONLINE</span></div>
+      <div class="sys-row"><span class="sec">C++ Backend Engine</span><span class="bdg b-warn">PENDING</span></div>
+      <div class="sys-row"><span class="sec">TimescaleDB</span><span class="bdg b-warn">PENDING</span></div>
+      <div class="sys-row"><span class="sec">WebSocket Feed</span><span class="bdg b-neu">MOCK MODE</span></div>
+    </div>
+  </div>
+
+  <!-- Auth -->
+  <div class="auth-panel">
+    <div class="auth-inner">
+      <h2 class="auth-h">Access Terminal</h2>
+      <p class="auth-s">Enter credentials to initialize the Quant Engine</p>
+
+      <div class="auth-tog">
+        <button class="atog on" id="btn-login">Sign In</button>
+        <button class="atog" id="btn-reg">Register</button>
+      </div>
+
+      <div class="auth-form">
+        <div class="afield" id="name-field" style="display:none">
+          <label class="albl">Full Name</label>
+          <input class="inp" id="inp-name" type="text" placeholder="Jane Quant">
+        </div>
+        <div class="afield">
+          <label class="albl">Email</label>
+          <input class="inp" id="inp-email" type="email" placeholder="you@alphawindow.io">
+        </div>
+        <div class="afield">
+          <label class="albl">Password</label>
+          <input class="inp" id="inp-pw" type="password" placeholder="••••••••">
+        </div>
+        <button class="btn btn-gold" id="submit-btn" style="width:100%;margin-top:6px">
+          Initialize System
+        </button>
+        <p style="font-size:clamp(8px,.58vw,10px);color:var(--txtD);text-align:center;line-height:1.6">
+          Demo: any email triggers the boot sequence
+        </p>
+      </div>
+
+      <div class="auth-term">
+        <div class="atl">&gt; AlphaWindow v2.4.1 loaded</div>
+        <div class="atl" style="color:var(--txtD)">&gt; WS_ENDPOINT: <span style="color:var(--gold)">ws://localhost:9001</span></div>
+        <div class="atl w">&gt; Backend: OFFLINE — Mock data active</div>
+        <div class="atl g">&gt; Awaiting authentication<span class="cur">_</span></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /land-wrap -->
+
+<script src="js/app.js"></script>
+<script>
+const BOOT_LINES=[
+  {t:'> Initializing AlphaWindow v2.4.1…',c:'var(--bull)'},
+  {t:'> Loading Eczar-Gold design system ✓',c:'var(--bull)'},
+  {t:'> WebSocket bridge: STANDBY (awaiting C++ backend)',c:'var(--warn)'},
+  {t:'> Connecting sentiment lexicon engine…',c:'var(--bull)'},
+  {t:'> Loading mock high-frequency data ✓',c:'var(--bull)'},
+  {t:'> Calibrating temporal cursor sync ✓',c:'var(--bull)'},
+  {t:'> System READY — Welcome to AlphaWindow',c:'var(--gold)'},
+];
+
+// Auth toggle
+document.getElementById('btn-login').addEventListener('click',()=>{
+  document.getElementById('btn-login').classList.add('on');
+  document.getElementById('btn-reg').classList.remove('on');
+  document.getElementById('name-field').style.display='none';
+});
+document.getElementById('btn-reg').addEventListener('click',()=>{
+  document.getElementById('btn-reg').classList.add('on');
+  document.getElementById('btn-login').classList.remove('on');
+  document.getElementById('name-field').style.display='flex';
+});
+
+function doAuth(){
+  const em=document.getElementById('inp-email').value.trim();
+  if(!em){ document.getElementById('inp-email').focus(); return; }
+  // Boot sequence
+  const ov=document.getElementById('boot');
+  const term=document.getElementById('boot-term');
+  const bar=document.getElementById('boot-bar');
+  ov.classList.add('on');
+  term.innerHTML='';
+  BOOT_LINES.forEach((line,i)=>{
+    setTimeout(()=>{
+      const el=document.createElement('div');
+      el.className='bl';
+      el.style.color=line.c;
+      el.textContent=line.t;
+      term.appendChild(el);
+      term.scrollTop=9999;
+    },i*250);
+  });
+  setTimeout(()=>{ bar.style.width='100%'; },60);
+  setTimeout(()=>{ window.location.href='AlphaWindow.html'; },2300);
+}
+
+document.getElementById('submit-btn').addEventListener('click',doAuth);
+document.addEventListener('keydown',e=>{ if(e.key==='Enter') doAuth(); });
+</script>
+</body>
+</html>

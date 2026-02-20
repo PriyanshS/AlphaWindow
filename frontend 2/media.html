@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaWindow — Media Oracle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Eczar:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.media-wrap{display:grid;grid-template-columns:1fr 360px;flex:1;min-height:calc(100vh - 52px)}
+.media-main{border-right:var(--bdr);display:flex;flex-direction:column;overflow-y:auto;padding:clamp(10px,1.2vw,18px)}
+.media-side{overflow-y:auto;padding:clamp(10px,1.2vw,18px);display:flex;flex-direction:column;gap:10px;background:var(--bg1)}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:clamp(10px,1.2vw,16px);flex-wrap:wrap;gap:8px}
+.nlp-stage{position:relative;height:260px;background:var(--bg2);overflow:hidden}
+.side-stat{display:flex;align-items:center;justify-content:space-between;font-size:clamp(9px,.65vw,11px)}
+
+@media(max-width:960px){
+  .media-wrap{grid-template-columns:1fr}
+  .media-side{border-top:var(--bdr)}
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div id="nav-mount"></div>
+
+<div class="page">
+  <div class="media-wrap">
+
+    <!-- Main -->
+    <div class="media-main">
+      <div class="ph">
+        <div>
+          <h2 style="font-size:clamp(18px,1.8vw,26px)">Media Oracle</h2>
+          <p class="sec" style="font-size:clamp(9px,.65vw,11px);margin-top:2px">NLP entity mapping · Lexicon scoring · RSS feed analysis</p>
+        </div>
+        <span class="nav-pill g-ticker">NVDA</span>
+      </div>
+
+      <!-- Sent chart -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="ch">
+          <span class="ct"><span class="a">MEDIA</span> Sentiment · 48h</span>
+          <span class="dim" style="font-size:clamp(8px,.56vw,9px)">Hover headline → temporal cursor syncs price & social</span>
+        </div>
+        <div style="padding:8px;height:90px">
+          <canvas id="c-msent" style="width:100%;height:100%;display:block"></canvas>
+        </div>
+      </div>
+
+      <!-- Headlines -->
+      <div class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="ch" style="flex-wrap:wrap;gap:6px">
+          <span class="ct"><span class="a">HEADLINES</span> Feed</span>
+          <div class="flex gap4">
+            <button class="stab on" onclick="filterArts('all',this)">All</button>
+            <button class="stab" onclick="filterArts('Bloomberg',this)">Bloomberg</button>
+            <button class="stab" onclick="filterArts('Reuters',this)">Reuters</button>
+            <button class="stab" onclick="filterArts('WSJ',this)">WSJ</button>
+          </div>
+        </div>
+        <div id="art-list" style="overflow-y:auto;flex:1"></div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="media-side">
+
+      <!-- NLP map -->
+      <div class="card">
+        <div class="ch">
+          <span class="ct">NLP <span class="a">Entity Map</span></span>
+          <span class="dim" style="font-size:clamp(8px,.56vw,9px)">Bubble = Pearson R weight</span>
+        </div>
+        <div class="nlp-stage" id="nlp-map"></div>
+        <div style="padding:6px 12px;border-top:var(--bdr);display:flex;gap:14px;font-size:clamp(8px,.56vw,9px);color:var(--txtD)">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--bull);display:inline-block"></span>Bullish entity</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--bear);display:inline-block"></span>Bearish entity</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--warn);display:inline-block"></span>Neutral</span>
+        </div>
+      </div>
+
+      <!-- Lag analysis -->
+      <div class="card">
+        <div class="ch"><span class="ct">Lag <span class="a">Analysis</span></span></div>
+        <div class="cb" style="display:flex;flex-direction:column;gap:9px">
+          <div class="side-stat"><span class="dim">Media → Price lag</span><span class="mono gold" id="lag-val" style="font-weight:600">+4.8h</span></div>
+          <div class="side-stat"><span class="dim">Pearson R (48h)</span><span class="mono gold" id="pearson-val" style="font-weight:600">0.61</span></div>
+          <div class="side-stat"><span class="dim">Top source</span><span class="mono sec" style="font-weight:600">Bloomberg</span></div>
+          <div class="side-stat"><span class="dim">Avg sentiment</span><span class="mono bull" id="avg-sent" style="font-weight:600">+0.38</span></div>
+          <div class="side-stat"><span class="dim">Negative signals</span><span class="mono bear" style="font-weight:600">2 / 8</span></div>
+          <div class="side-stat"><span class="dim">NLP confidence</span><span class="mono sec" style="font-weight:600">84%</span></div>
+        </div>
+      </div>
+
+      <!-- RSS status -->
+      <div class="card">
+        <div class="ch"><span class="ct"><span class="a">RSS</span> Engine Status</span></div>
+        <div class="cb" style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center">
+          <div class="ws-pill"><div class="ws-dot"></div>RSS Parser: PENDING</div>
+          <p style="font-size:clamp(8px,.58vw,10px);color:var(--txtD);line-height:1.65">
+            Bloomberg / Reuters / RSS feeds will be parsed by the C++ NLP engine and pushed via REST + WebSocket
+          </p>
+          <div style="font-family:var(--fm);font-size:clamp(8px,.58vw,10px);color:var(--txtD);text-align:left;width:100%">
+            <div style="margin-bottom:3px">GET /api/v1/headlines/{ticker}</div>
+            <div>WS&nbsp;&nbsp;/ws/nlp-stream</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+document.getElementById('nav-mount').innerHTML = buildNav('media');
+startClock();
+
+const ticker = getTicker();
+document.querySelectorAll('.g-ticker').forEach(el=>el.textContent=ticker);
+
+const D = getData(ticker);
+const {headlines, sentiment, sum} = D;
+
+// Update lag values from real data
+document.getElementById('lag-val').textContent = `+${sum.lag}h`;
+document.getElementById('pearson-val').textContent = sum.pearson;
+const avgS = headlines.reduce((a,h)=>a+h.sentiment,0)/headlines.length;
+document.getElementById('avg-sent').textContent = avgS>0?`+${avgS.toFixed(2)}`:`${avgS.toFixed(2)}`;
+
+// Sent chart
+requestAnimationFrame(()=>{
+  spark(document.getElementById('c-msent'), sentiment.slice(-48).map(s=>s.score), {color:sum.sc>0?'#3ddc84':'#ff4d6d',grid:true});
+});
+
+// NLP entity map
+const nodes=[
+  {l:'EARNINGS',  x:54,y:28,sz:52,s:.70},
+  {l:'REGULATORY',x:19,y:55,sz:40,s:-.60},
+  {l:'MOMENTUM',  x:76,y:58,sz:48,s:.55},
+  {l:'MACRO',     x:40,y:73,sz:36,s:-.20},
+  {l:'GUIDANCE',  x:80,y:22,sz:44,s:.65},
+  {l:'COMPETITION',x:27,y:36,sz:38,s:-.45},
+  {l:'INNOVATION',x:60,y:83,sz:42,s:.60},
+];
+document.getElementById('nlp-map').innerHTML = nodes.map(n=>{
+  const col = n.s>.2?'var(--bull)':n.s<-.2?'var(--bear)':'var(--warn)';
+  const r = (Math.abs(n.s)*.7+.28).toFixed(2);
+  return `<div class="nnode" style="left:${n.x}%;top:${n.y}%">
+    <div class="nbub" style="width:${n.sz}px;height:${n.sz}px;color:${col};background:${col}20">${r}</div>
+    <div class="nlbl">${n.l}</div>
+  </div>`;
+}).join('');
+
+// Articles
+let currentSrc = 'all';
+function filterArts(src, btn){
+  currentSrc = src;
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderArts();
+}
+window.filterArts = filterArts;
+
+function renderArts(){
+  const items = currentSrc==='all' ? headlines : headlines.filter(h=>h.source===currentSrc);
+  document.getElementById('art-list').innerHTML = items.map(h=>`
+    <div class="art">
+      <div class="art-src">${h.source}</div>
+      <div class="art-h">${h.headline}</div>
+      <div class="art-meta">
+        <span>${ft(h.ts)} · ${fd(h.ts)}</span>
+        <span class="bdg b-${sc(h.sentiment)}">${sl(h.sentiment)}</span>
+        <span style="margin-left:auto" class="gold mono">+${h.lag}h lag</span>
+      </div>
+      <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap">
+        ${h.tags.map(t=>`<span class="bdg b-neu" style="font-size:8px">${t}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+renderArts();
+</script>
+</body>
+</html>

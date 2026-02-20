@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaWindow — Social Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Eczar:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.social-wrap{display:grid;grid-template-columns:1fr 320px;flex:1;min-height:calc(100vh - 52px)}
+.social-main{border-right:var(--bdr);display:flex;flex-direction:column;overflow-y:auto;padding:clamp(10px,1.2vw,18px)}
+.social-side{overflow-y:auto;padding:clamp(10px,1.2vw,18px);display:flex;flex-direction:column;gap:10px;background:var(--bg1)}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:clamp(10px,1.2vw,16px);flex-wrap:wrap;gap:8px}
+
+.sent-bar-r{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sb-t{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.sb-f{height:100%;border-radius:3px}
+.sb-bull-g{background:linear-gradient(90deg,var(--bull),#2ecc71)}
+.side-stat{display:flex;align-items:center;justify-content:space-between;font-size:clamp(9px,.65vw,11px)}
+
+@media(max-width:960px){
+  .social-wrap{grid-template-columns:1fr}
+  .social-side{border-top:var(--bdr)}
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div id="nav-mount"></div>
+
+<div class="page">
+  <div class="social-wrap">
+
+    <!-- Main -->
+    <div class="social-main">
+      <div class="ph">
+        <div>
+          <h2 style="font-size:clamp(18px,1.8vw,26px)">Social Pulse</h2>
+          <p class="sec" style="font-size:clamp(9px,.65vw,11px);margin-top:2px">Sentiment heatmaps · X & Reddit scoring · NLP lead detection</p>
+        </div>
+        <span class="nav-pill g-ticker">NVDA</span>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="ch">
+          <span class="ct"><span class="a">SENTIMENT</span> Heatmap · 7d × 24h</span>
+          <span class="dim" style="font-size:clamp(8px,.56vw,9px)">Intensity = mention vol × score magnitude</span>
+        </div>
+        <div class="hmap" id="hmap"></div>
+        <div style="padding:4px 14px 10px;display:flex;align-items:center;gap:8px;font-size:clamp(8px,.56vw,9px);color:var(--txtD)">
+          <span>Low</span>
+          <div style="display:flex;gap:3px">
+            <div style="width:13px;height:13px;border-radius:2px;background:var(--bg4)"></div>
+            <div style="width:13px;height:13px;border-radius:2px;background:rgba(197,160,89,.18)"></div>
+            <div style="width:13px;height:13px;border-radius:2px;background:rgba(197,160,89,.4)"></div>
+            <div style="width:13px;height:13px;border-radius:2px;background:rgba(197,160,89,.62)"></div>
+            <div style="width:13px;height:13px;border-radius:2px;background:rgba(197,160,89,.82)"></div>
+            <div style="width:13px;height:13px;border-radius:2px;background:var(--gold)"></div>
+          </div>
+          <span>High</span>
+        </div>
+      </div>
+
+      <!-- Sent chart -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="ch"><span class="ct"><span class="a">SENTIMENT</span> Score · 48h</span></div>
+        <div style="padding:8px;height:90px"><canvas id="c-ssent" style="width:100%;height:100%;display:block"></canvas></div>
+      </div>
+
+      <!-- Feed -->
+      <div class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="stabs">
+          <button class="stab on" onclick="filterFeed('all',this)">All</button>
+          <button class="stab" onclick="filterFeed('X',this)">X</button>
+          <button class="stab" onclick="filterFeed('Reddit',this)">Reddit</button>
+        </div>
+        <div id="sfeed" style="overflow-y:auto;flex:1"></div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="social-side">
+
+      <div class="card">
+        <div class="ch"><span class="ct">Bull/Bear <span class="a">Split</span></span></div>
+        <div class="cb">
+          <div class="sent-bar-r">
+            <span class="bear" style="font-size:clamp(8px,.58vw,10px)">Bear</span>
+            <div class="sb-t"><div class="sb-f sb-bull-g" id="s-bbar" style="width:62%"></div></div>
+            <span class="bull" style="font-size:clamp(8px,.58vw,10px)">Bull</span>
+          </div>
+          <div class="flex fjb mono" style="font-size:clamp(10px,.8vw,12px)">
+            <span class="bear" id="s-bear-pct">38.0%</span>
+            <span class="bull" id="s-bull-pct">62.0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><span class="ct">Signal <span class="a">Stats</span></span></div>
+        <div class="cb" style="display:flex;flex-direction:column;gap:9px">
+          <div class="side-stat"><span class="dim">Avg Score</span><span class="mono bull" id="s-avg" style="font-weight:600">+0.41</span></div>
+          <div class="side-stat"><span class="dim">Posts (24h)</span><span class="mono sec" style="font-weight:600">1,847</span></div>
+          <div class="side-stat"><span class="dim">Influencer R</span><span class="mono gold" style="font-weight:600">0.68</span></div>
+          <div class="side-stat"><span class="dim">Momentum</span><span class="mono bull" style="font-weight:600">RISING</span></div>
+          <div class="side-stat"><span class="dim">X / Reddit</span><span class="mono sec" style="font-weight:600">6 / 4</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><span class="ct">Top <span class="a">Contributors</span></span></div>
+        <div class="cb" style="display:flex;flex-direction:column;gap:8px">
+          <div class="side-stat"><span class="dim">@macro_edge</span><span class="mono gold" style="font-weight:600;font-size:clamp(8px,.58vw,10px)">89.2K</span></div>
+          <div class="side-stat"><span class="dim">u/WSB_Prophet</span><span class="mono sec" style="font-weight:600;font-size:clamp(8px,.58vw,10px)">3.3K ⬆</span></div>
+          <div class="side-stat"><span class="dim">@chart_surgeon</span><span class="mono sec" style="font-weight:600;font-size:clamp(8px,.58vw,10px)">34.1K</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><span class="ct"><span class="a">WS</span> Integration</span></div>
+        <div class="cb" style="text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center">
+          <div class="ws-pill"><div class="ws-dot"></div>X/Reddit Scraper: PENDING</div>
+          <p style="font-size:clamp(8px,.58vw,10px);color:var(--txtD);line-height:1.6;text-align:center">
+            Live feeds stream via WebSocket when C++ backend connects to <code style="color:var(--gold)">ws://localhost:9001</code>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+document.getElementById('nav-mount').innerHTML = buildNav('social');
+startClock();
+
+const ticker = getTicker();
+document.querySelectorAll('.g-ticker').forEach(el=>el.textContent=ticker);
+
+const D = getData(ticker);
+const {social, heatmap, sentiment, sum} = D;
+
+// Heatmap
+document.getElementById('hmap').innerHTML = heatmap.map(c=>
+  `<div class="hcell hc${c.int}" data-ts="${c.ts}" title="${fd(c.ts)} ${c.h}:00 · Intensity ${c.int}"></div>`
+).join('');
+
+// Sentiment chart
+requestAnimationFrame(()=>{
+  spark(document.getElementById('c-ssent'), sentiment.slice(-48).map(s=>s.score), {color:sum.sc>0?'#3ddc84':'#ff4d6d',grid:true,lw:2});
+});
+
+// Bull bar
+document.getElementById('s-bbar').style.width = `${sum.bp}%`;
+document.getElementById('s-bull-pct').textContent = `${sum.bp}%`;
+document.getElementById('s-bear-pct').textContent = `${(100-sum.bp).toFixed(1)}%`;
+document.getElementById('s-avg').textContent = sum.sc>0?`+${sum.sc}`:`${sum.sc}`;
+
+// Feed
+let currentFilter = 'all';
+function filterFeed(filter, btn){
+  currentFilter = filter;
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderFeed();
+}
+
+function renderFeed(){
+  const items = currentFilter === 'all' ? social : social.filter(p=>p.plt===currentFilter);
+  document.getElementById('sfeed').innerHTML = items.map(p=>`
+    <div class="fitem">
+      <div class="fhead">
+        <span class="fsrc">${p.plt}</span>
+        <span class="dim" style="font-family:var(--fm);font-size:clamp(8px,.56vw,9px)">${p.usr}</span>
+        <span class="bdg b-${sc(p.s)}" style="margin-left:auto">${sl(p.s)}</span>
+        <span class="ftime">${ft(p.ts)}</span>
+      </div>
+      <div class="ftxt">${p.txt}</div>
+      <div class="fmeta">
+        ${p.fol?`<span>👥 ${fv(p.fol)}</span>`:''}
+        ${p.up?`<span>⬆ ${fv(p.up)}</span>`:''}
+        <span style="margin-left:auto">Score: <span class="${sc(p.s)==='bull'?'bull':sc(p.s)==='bear'?'bear':'sec'}">${p.s.toFixed(2)}</span></span>
+      </div>
+    </div>`).join('');
+}
+renderFeed();
+</script>
+</body>
+</html>

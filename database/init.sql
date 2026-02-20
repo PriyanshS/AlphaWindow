@@ -206,7 +206,7 @@ CREATE TABLE IF NOT EXISTS "LAG_CONFIG" (
 -- ============================================================================
 -- 1-minute aggregated sentiment
 CREATE MATERIALIZED VIEW IF NOT EXISTS sentiment_1min_agg AS
-SELECT 
+SELECT
   time_bucket('1 minute', time) AS minute,
   symbol,
   AVG(score) AS avg_sentiment,
@@ -217,7 +217,7 @@ GROUP BY minute, symbol;
 
 -- 5-minute price aggregation
 CREATE MATERIALIZED VIEW IF NOT EXISTS price_5min_agg AS
-SELECT 
+SELECT
   time_bucket('5 minutes', time) AS minute,
   symbol,
   FIRST(open, time) AS open,
@@ -238,5 +238,3 @@ INSERT INTO "TICKERS" (symbol, name, sector, exchange, is_active) VALUES
   ('AAPL', 'Apple Inc', 'Technology', 'NASDAQ', TRUE),
   ('MSFT', 'Microsoft Corporation', 'Technology', 'NASDAQ', TRUE)
 ON CONFLICT (symbol) DO NOTHING;
-
-
